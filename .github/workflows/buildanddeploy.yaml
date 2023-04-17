@@ -1,0 +1,50 @@
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+
+env:
+  RESOURCE_GROUP_NAME: my-demo-rg
+  ACR_NAME: demoappacr
+  AKS_NAME: democlusteraks
+  NODE_SIZE: standard_ds2
+  NODE_COUNT: 3
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Create Azure Container Registry
+      uses: azure/CLI@v1
+      with:
+        azcliversion: '2.30.0'
+        inlineScript: |
+          az acr create --resource-group ${{ env.RESOURCE_GROUP_NAME }} --name ${{ env.ACR_NAME }} --sku Standard --admin-enabled true
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ env.ACR_NAME }}.azurecr.io/yourimage:latest
+        registry: ${{ env.ACR_NAME }}.azurecr.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+
+    - name: Create AKS cluster
+      run: |
+        az aks create --resource-group ${{ env.RESOURCE_GROUP_NAME }} --name ${{ env.AKS_NAME }} --node-count ${{ env.NODE_COUNT }} --node-vm-size ${{ env.NODE_SIZE }} --generate-ssh-keys
+
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        cluster-name: ${{ env.AKS_NAME }}
+        resource-group: ${{ env.RESOURCE_GROUP_NAME }}
