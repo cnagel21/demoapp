@@ -21,6 +21,10 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: Create Resource Group
+      run: |
+        az group create --name ${{ env.RESOURCE_GROUP_NAME }} --location centralus
+
     - name: Create Azure Container Registry
       uses: azure/CLI@v1
       with:
