@@ -5,8 +5,8 @@ on:
 
 env:
   RESOURCE_GROUP_NAME: my-demo-rg
-  ACR_NAME: demoappacr
-  AKS_NAME: democlusteraks
+  ACR_NAME: servysacrdemo
+  AKS_NAME: servysdemoaks
   NODE_SIZE: standard_ds2
   NODE_COUNT: 3
 
